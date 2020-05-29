@@ -1,89 +1,21 @@
-import React, { useEffect } from "react";
-import Button from "@material-ui/core/Button";
+import React from "react";
+
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
 import Film from "./Film";
-import { withStyles } from "@material-ui/core/styles";
-import Menu from "@material-ui/core/Menu";
-import MenuItem from "@material-ui/core/MenuItem";
-import ListItemIcon from "@material-ui/core/ListItemIcon";
-import ListItemText from "@material-ui/core/ListItemText";
-import StarIcon from "@material-ui/icons/Star";
-import { Link as LinkRouter } from "react-router-dom";
-import Spinner from "./Spinner/Spinner";
 
-const StyledMenu = withStyles({
-  paper: {
-    border: "1px solid #d3d4d5",
-  },
-})((props) => (
-  <Menu
-    elevation={0}
-    getContentAnchorEl={null}
-    anchorOrigin={{
-      vertical: "bottom",
-      horizontal: "center",
-    }}
-    transformOrigin={{
-      vertical: "top",
-      horizontal: "center",
-    }}
-    {...props}
-  />
-));
+import Spinner from "./Spinner/Spinner";
 
 const useStyles = makeStyles((theme) => ({
   heroContent: {
     backgroundColor: theme.palette.background.paper,
     padding: theme.spacing(8, 0, 6),
   },
-  heroButtons: {
-    marginTop: theme.spacing(2),
-    marginRight: theme.spacing(4),
-    position: "flex",
-    justifyContent: "flex-end",
-    zIndex: "1",
-  },
   filmGrid: {
     paddingTop: theme.spacing(8),
     paddingBottom: theme.spacing(8),
-  },
-  footer: {
-    backgroundColor: theme.palette.background.paper,
-    padding: theme.spacing(6),
-  },
-  favoriteBtn: {
-    color: "#494949 !important",
-    fontFamily: "Orbitron",
-    textTransform: "uppercase",
-    textDecoration: "none",
-    background: "#ffffff",
-    padding: "10px",
-    border: "4px solid #494949 !important",
-    display: "inline-block",
-    transition: "all 0.4s ease 0s",
-    "&:hover": {
-      color: "#494949 !important",
-      background: "#FFE81F",
-      borderColor: "#494949 !important",
-      transition: "all 0.4s ease 0s",
-    },
-  },
-  listItemTxt: {
-    textDecoration: "none",
-    color: theme.palette.primary.dark,
-  },
-  icon: {
-    color: "#FFE81F",
-  },
-  menuItem: {
-    backgroundColor: "#262626",
-    color: "white",
-    "&:hover": {
-      backgroundColor: "#333333",
-    },
   },
   collectionPageTitle: {
     letterSpacing: "5px",
@@ -91,36 +23,14 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const FilmsCollection = (props) => {
-  const [films, setFilms] = React.useState([]);
-  const [favFilms, setFavFilms] = React.useState(
-    JSON.parse(localStorage.getItem("favFilms")) || []
-  );
+const FilmsCollection = ({
+  favoriteBtnClickHandler,
+  films,
+  favFilms,
+  setFavFilms,
+  history,
+}) => {
   const classes = useStyles();
-  const [anchorEl, setAnchorEl] = React.useState(null);
-
-  useEffect(() => {
-    fetch("https://swapi.dev/api/films")
-      .then((response) => {
-        return response.json();
-      })
-      .then((data) => {
-        setFilms(data.results);
-      });
-  }, []);
-
-  React.useEffect(() => {
-    localStorage.setItem("favFilms", JSON.stringify(favFilms));
-  }, [favFilms]);
-
-  const handleClick = (event) => {
-    if (!favFilms.length) return;
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
 
   const shortenSummary = (summary, maxLen = 155) => {
     if (summary.length <= maxLen) return summary;
@@ -138,22 +48,9 @@ const FilmsCollection = (props) => {
     return words.join(" ") + "...";
   };
 
-  const favoriteBtnClickHandler = (id) => {
-    let filmInd = favFilms.findIndex((fav) => fav.episode_id === id);
-    const favFilmsCpy = [...favFilms];
-    if (filmInd !== -1) {
-      favFilmsCpy.splice(filmInd, 1);
-    } else {
-      let film = films.find((film) => film.episode_id === id);
-      film = JSON.parse(JSON.stringify(film));
-      favFilmsCpy.push(film);
-    }
-    setFavFilms(favFilmsCpy);
-  };
-
   const readMoreBtnHandler = (id) => {
     const film = films.find((film) => film.episode_id === id);
-    props.history.push({
+    history.push({
       pathname: "/fullcontent",
       query: { film: film },
     });
@@ -183,85 +80,28 @@ const FilmsCollection = (props) => {
     });
   }
 
-  const listOfFavFilmsToRender = favFilms.map((film) => {
-    return (
-      <LinkRouter
-        to={{
-          pathname: "/fullcontent",
-          query: { film: film },
-        }}
-        key={film.episode_id}
-        className={classes.listItemTxt}
-      >
-        <MenuItem className={classes.menuItem}>
-          <ListItemIcon>
-            <StarIcon className={classes.icon} fontSize="small" />
-          </ListItemIcon>
-          <ListItemText primary={film.title} />
-        </MenuItem>
-      </LinkRouter>
-    );
-  });
-
   return (
     <React.Fragment>
       {/* Main */}
-      <main>
-        <div className={classes.heroButtons}>
-          <Grid container spacing={2} justify="flex-end">
-            <Grid item>
-              <Button
-                className={classes.favoriteBtn}
-                aria-controls="customized-menu"
-                aria-haspopup="true"
-                variant="contained"
-                variant="outlined"
-                onClick={handleClick}
-              >
-                my Favorites
-              </Button>
-              <StyledMenu
-                id="customized-menu"
-                anchorEl={anchorEl}
-                keepMounted
-                open={Boolean(anchorEl)}
-                onClose={handleClose}
-              >
-                {listOfFavFilmsToRender}
-              </StyledMenu>
-            </Grid>
-          </Grid>
-        </div>
-        <div className={classes.heroContent}>
-          <Container maxWidth="md">
-            <Typography
-              className={classes.collectionPageTitle}
-              variant="h2"
-              align="center"
-              color="textPrimary"
-              gutterBottom
-            >
-              STAR WARS FILMS
-            </Typography>
-          </Container>
-        </div>
-        <Container className={classes.filmGrid} maxWidth="lg">
-          <Grid container spacing={4} lg={12}>
-            {listOfAllfilmsToRender}
-          </Grid>
+      <div className={classes.heroContent}>
+        <Container maxWidth="md">
+          <Typography
+            className={classes.collectionPageTitle}
+            variant="h2"
+            align="center"
+            color="textPrimary"
+            gutterBottom
+          >
+            STAR WARS FILMS
+          </Typography>
         </Container>
-      </main>
+      </div>
+      <Container className={classes.filmGrid} maxWidth="lg">
+        <Grid container spacing={4} lg={12}>
+          {listOfAllfilmsToRender}
+        </Grid>
+      </Container>
       {/* End Main */}
-      {/* Footer */}
-      <footer className={classes.footer}>
-        <Typography variant="h6" align="center" gutterBottom>
-          Dafna Sasson
-        </Typography>
-        <Typography variant="subtitle1" align="center" color="textSecondary">
-          a STAR WARS fan!
-        </Typography>
-      </footer>
-      {/* End Footer */}
     </React.Fragment>
   );
 };
